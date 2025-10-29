@@ -86,6 +86,7 @@ from .element import (
     Stylesheet,
     Tag,
     TemplateString,
+    SoupReplacer,
 )
 from .formatter import Formatter
 from .filter import (
@@ -180,6 +181,7 @@ class BeautifulSoup(Tag):
     is_xml: bool
     known_xml: Optional[bool]
     parse_only: Optional[SoupStrainer]  #: :meta private:
+    replacer: Optional[SoupReplacer]
 
     # These members are only used while parsing markup.
     markup: Optional[_RawMarkup]  #: :meta private:
@@ -212,6 +214,7 @@ class BeautifulSoup(Tag):
         features: Optional[Union[str, Sequence[str]]] = None,
         builder: Optional[Union[TreeBuilder, Type[TreeBuilder]]] = None,
         parse_only: Optional[SoupStrainer] = None,
+        replacer: Optional[SoupReplacer] = None,
         from_encoding: Optional[_Encoding] = None,
         exclude_encodings: Optional[_Encodings] = None,
         element_classes: Optional[Dict[Type[PageElement], Type[PageElement]]] = None,
@@ -435,6 +438,7 @@ class BeautifulSoup(Tag):
         self.known_xml = self.is_xml
         self._namespaces = dict()
         self.parse_only = parse_only
+        self.replacer = replacer
 
         if hasattr(markup, "read"):  # It's a file-type object.
             markup = markup.read()
@@ -1016,6 +1020,11 @@ class BeautifulSoup(Tag):
         :meta private:
         """
         # print("Start tag %s: %s" % (name, attrs))
+
+        # Replace tag when replacer is not None and an new tag is encountered
+        if getattr(self, "replacer", None):
+            name = self.replacer.replace(name)
+        
         self.endData()
 
         if (
@@ -1059,6 +1068,11 @@ class BeautifulSoup(Tag):
         :meta private:
         """
         # print("End tag: " + name)
+
+        # Replace tag when replacer is not None and an ending tag is encountered
+        if getattr(self, "replacer", None):
+            name = self.replacer.replace(name)
+
         self.endData()
         self._popToTag(name, nsprefix)
 

@@ -2884,3 +2884,16 @@ class ResultSet(List[_PageElementT], Generic[_PageElementT]):
 # backwards compatibility of anyone who imports
 # bs4.element.SoupStrainer.
 from bs4.filter import SoupStrainer # noqa: E402
+
+class SoupReplacer:
+    def __init__(
+        self, og_tag, alt_tag
+    ):
+        self.og_tag = og_tag
+        self.alt_tag = alt_tag
+    
+    def replace(self, tagname):
+        if tagname == self.og_tag:
+            return self.alt_tag
+        return tagname
+
