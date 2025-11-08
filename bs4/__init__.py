@@ -86,7 +86,6 @@ from .element import (
     Stylesheet,
     Tag,
     TemplateString,
-    SoupReplacer,
 )
 from .formatter import Formatter
 from .filter import (
@@ -129,6 +128,7 @@ from bs4._warnings import (
     UnusualUsageWarning,
     XMLParsedAsHTMLWarning,
 )
+from .soupReplacer import SoupReplacer
 
 
 class BeautifulSoup(Tag):
@@ -1021,9 +1021,9 @@ class BeautifulSoup(Tag):
         """
         # print("Start tag %s: %s" % (name, attrs))
 
-        # Replace tag when replacer is not None and an new tag is encountered
+        # If a SoupReplacer is attached, apply its transformations during parsing.
         if getattr(self, "replacer", None):
-            name = self.replacer.replace(name)
+            name, attrs = self.replacer.replace(name, attrs)
         
         self.endData()
 
@@ -1053,6 +1053,11 @@ class BeautifulSoup(Tag):
         )
         if tag is None:
             return tag
+        
+        # Apply xformer() while the Tag object exists
+        if getattr(self, "replacer", None):
+            self.replacer.apply_xformer(tag)
+
         if self._most_recent_element is not None:
             self._most_recent_element.next_element = tag
         self._most_recent_element = tag
@@ -1069,9 +1074,9 @@ class BeautifulSoup(Tag):
         """
         # print("End tag: " + name)
 
-        # Replace tag when replacer is not None and an ending tag is encountered
+        # Apply transformations when replacer is not None and an ending tag is encountered
         if getattr(self, "replacer", None):
-            name = self.replacer.replace(name)
+            name, _ = self.replacer.replace(name, [])
 
         self.endData()
         self._popToTag(name, nsprefix)
