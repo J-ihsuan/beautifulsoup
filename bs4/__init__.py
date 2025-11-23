@@ -1160,7 +1160,31 @@ class BeautifulSoup(Tag):
         return prefix + super(BeautifulSoup, self).decode(
             indent_level, eventual_encoding, formatter, iterator
         )
+    
+    def __iter__(self):
+        """
+        DFS traversal iterator for BeautifulSoup tree
 
+        The iteration follows a DFS order and yields every node in BeautifulSoup tree, including:
+            - The root document node (BeautifulSoup object itself)
+            - Tag nodes
+            - NavigableString nodes (text)
+
+        Implements:
+        :stackBucket: a stack to implement DFS (LIFO)
+            - push children in *reversed* order -> first child first out
+            - traversal stops when all nodes have been yielded
+
+        Returns:
+            A generator yielding each node in tree.
+        """
+        stackBucket = [self]
+
+        while stackBucket:
+            node = stackBucket.pop()
+            yield node
+            if hasattr(node, "contents"):
+                stackBucket.extend(reversed(node.contents))
 
 # Aliases to make it easier to get started quickly, e.g. 'from bs4 import _soup'
 _s = BeautifulSoup
